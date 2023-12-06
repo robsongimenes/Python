@@ -1,0 +1,37 @@
+import socket
+import settings.udp as settings
+
+UDP_IP = settings.UDP["SERVER_UDP_IPv4"]
+UDP_PORT = settings.UDP["SERVER_PORT"]
+BUFFER_SIZE = 1024
+
+temperature_threshold = 5
+
+print(f'This is the UDP server, it will open a port at {UDP_IP}:{UDP_PORT} and begin listening')
+print(f'Make sure the actual server IP address matches {UDP_IP} in the settings file')
+print('This script has no error handling, by design')
+
+# Create a dictionary to store the temperature of each client
+client_temperatures = {}
+
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    s.bind((UDP_IP, UDP_PORT))
+    print('Listening on', UDP_IP)
+    
+    while True:
+        data, addr = s.recvfrom(BUFFER_SIZE)
+        data = data.decode()
+        
+        # Split the received data into client ID and temperature value
+        client_id, temperature = data.split(" ")
+        
+        # Store the temperature value in the dictionary
+        client_temperatures[client_id] = float(temperature)
+        
+        # Check if any client temperature exceeds the threshold
+        if any(value > temperature_threshold for value in client_temperatures.values()):
+            print("Temperature alarm triggered!")
+            # Perform actions when the alarm is triggered (e.g., send a notification)
+        
+        print(addr, data)
